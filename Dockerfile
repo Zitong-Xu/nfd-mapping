@@ -4,6 +4,7 @@ ARG BASE_IMAGE_MINIMAL
 # Build node feature discovery
 FROM golang:1.17.2-buster as builder
 
+ENV GOPROXY="https://goproxy.io"
 # Download the grpc_health_probe bin
 RUN GRPC_HEALTH_PROBE_VERSION=v0.3.1 && \
     wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \

@@ -53,6 +53,15 @@ type usbSource struct {
 	features *feature.DomainFeatures
 }
 
+
+// zitong------adding a mapping scheme to convert usb-ids to human readable usb device name
+type usbDevMap struct {
+        classMap  map[string]string
+        vendorMap map[string]string
+        deviceMap map[string]string
+}
+
+
 // Singleton source instance
 var (
 	src                           = usbSource{config: newDefaultConfig()}
@@ -117,6 +126,26 @@ func (s *usbSource) GetLabels() (source.FeatureLabels, error) {
 	for _, dev := range features.Instances[DeviceFeature].Elements {
 		attrs := dev.Attributes
 		class := attrs["class"]
+		umap := new(usbDevMap)
+                umap.classMap = make(map[string]string)
+                umap.vendorMap = make(map[string]string)
+                umap.deviceMap = make(map[string]string)
+
+                umap.classMap["0e"] = "Video"
+                umap.classMap["ef"] = "Miscellaneous-Device"
+                umap.classMap["fe"] = "Application"  //Application Specific Interface
+		umap.classMap["ff"] = "Vendor"  //Vendor Specific Interface
+
+		umap.vendorMap["1a6e"] = "Grobal-Unichip-Crop"
+                umap.vendorMap["03e7"] = "Intel"
+
+                umap.deviceMap["089a"] = "Coral-Edge-TPU"
+                umap.deviceMap["2150"] = "Myriad-VPU" //Myriad VPU [Movidius Neural Compute Stick]
+                umap.deviceMap["2485"] = "Movidius-MyriadX" //Movidius MyriadX
+                umap.deviceMap["f63b"] = "Myriad-VPU" //Myriad VPU [Movidius Neural Compute Stick]
+
+
+
 		for _, white := range s.config.DeviceClassWhitelist {
 			if strings.HasPrefix(string(class), strings.ToLower(white)) {
 				devLabel := ""
@@ -127,6 +156,19 @@ func (s *usbSource) GetLabels() (source.FeatureLabels, error) {
 					}
 				}
 				labels[devLabel+".present"] = true
+				if _, ok := umap.classMap[class]; ok {
+                                        for k, v := range umap.vendorMap {
+                                                if attrs["vendor"] == k {
+                                                        for kk, vv := range umap.deviceMap {
+                                                                if attrs["device"] == kk {
+                                                                        devLabel = ""
+                                                                        devLabel = umap.classMap[class] + "_" + v + "_" + vv
+                                                                        labels[devLabel+".present"] = true
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                }
 				break
 			}
 		}

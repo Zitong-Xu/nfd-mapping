@@ -32,11 +32,15 @@ JEKYLL_OPTS := -d '$(SITE_DESTDIR)' $(if $(SITE_BASEURL),-b '$(SITE_BASEURL)',)
 
 VERSION := $(shell git describe --tags --dirty --always)
 
-IMAGE_REGISTRY ?= k8s.gcr.io/nfd
-IMAGE_TAG_NAME ?= $(VERSION)
+#IMAGE_REGISTRY ?= k8s.gcr.io/nfd
+#IMAGE_TAG_NAME ?= xzt
+#IMAGE_EXTRA_TAG_NAMES ?=
+
+IMAGE_REGISTRY ?= zitongxu
+IMAGE_TAG_NAME ?= readable-dev-labels
 IMAGE_EXTRA_TAG_NAMES ?=
 
-IMAGE_NAME := node-feature-discovery
+IMAGE_NAME := nfd
 IMAGE_REPO := $(IMAGE_REGISTRY)/$(IMAGE_NAME)
 IMAGE_TAG := $(IMAGE_REPO):$(IMAGE_TAG_NAME)
 IMAGE_EXTRA_TAGS := $(foreach tag,$(IMAGE_EXTRA_TAG_NAMES),$(IMAGE_REPO):$(tag))

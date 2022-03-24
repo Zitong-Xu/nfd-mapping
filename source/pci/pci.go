@@ -50,6 +50,15 @@ type pciSource struct {
 	features *feature.DomainFeatures
 }
 
+
+// zitong------adding a mapping scheme to convert pci-ids to human readable pci device name
+type pciDevMap struct {
+	classMap  map[string]string
+	vendorMap map[string]string
+	deviceMap map[string]string
+}
+
+
 // Singleton source instance
 var (
 	src                           = pciSource{config: newDefaultConfig()}
@@ -114,6 +123,24 @@ func (s *pciSource) GetLabels() (source.FeatureLabels, error) {
 	for _, dev := range features.Instances[DeviceFeature].Elements {
 		attrs := dev.Attributes
 		class := attrs["class"]
+		pmap := new(pciDevMap)
+		pmap.classMap = make(map[string]string)
+		pmap.vendorMap = make(map[string]string)
+		pmap.deviceMap = make(map[string]string)
+
+		pmap.classMap["0300"] = "VGA"
+		pmap.classMap["0301"] = "XGA"
+		pmap.vendorMap["1002"] = "AMD"
+		pmap.vendorMap["10de"] = "NVIDIA"
+		pmap.vendorMap["8086"] = "Intel"
+		pmap.vendorMap["15ad"] = "VMware"
+
+		pmap.deviceMap["6779"] = "Radeon-HD-R5-230" //Radeon HD 6450/7450/8450 / R5 230 OEM
+		pmap.deviceMap["128b"] = "GeForce-GT-710"
+		pmap.deviceMap["0f31"] = "Z36xxx-Z37xxx-Series" //Atom Processor Z36xxx/Z37xxx Series Graphics & Display
+		pmap.deviceMap["0405"] = "SVGA-II-Adapter"
+		pmap.deviceMap["67ff"] = "Radeon-RX-550" //Radeon RX 550 640SP / RX 560/560X]
+
 		for _, white := range s.config.DeviceClassWhitelist {
 			if strings.HasPrefix(string(class), strings.ToLower(white)) {
 				devLabel := ""
@@ -124,6 +151,20 @@ func (s *pciSource) GetLabels() (source.FeatureLabels, error) {
 					}
 				}
 				labels[devLabel+".present"] = true
+
+				if _, ok := pmap.classMap[class]; ok {
+					for k, v := range pmap.vendorMap {
+						if attrs["vendor"] == k {
+							for kk, vv := range pmap.deviceMap {
+								if attrs["device"] == kk {
+									devLabel = ""
+									devLabel = pmap.classMap["0300"] + "_" + v + "_" + vv
+									labels[devLabel+".present"] = true
+								}
+							}
+						}
+					}
+				}
 
 				if _, ok := attrs["sriov_totalvfs"]; ok {
 					labels[devLabel+".sriov.capable"] = true
